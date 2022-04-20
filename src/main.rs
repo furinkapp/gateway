@@ -27,7 +27,8 @@ async fn connect_and_register() -> Result<DiscoveryServiceClient<Channel>, Box<d
     info!("Connecting to service discovery...");
     let url = env::var("SERVICE_DISCOVERY_URL").expect("service discovery url must be provided");
     let channel = Channel::from_shared(url.clone())?.connect().await?;
-
+	info!("Connected to service discovery");
+	info!("Validating server protocol version...");
     // check version
     let mut version_checker = VersionServiceClient::new(channel.clone());
     let version = version_checker
@@ -40,9 +41,9 @@ async fn connect_and_register() -> Result<DiscoveryServiceClient<Channel>, Box<d
     if version.version != VERSION {
         return Err("mismatched version".into());
     }
+	info!("Server protocol version is valid, registering service...");
     // register service
     let mut sd_client = DiscoveryServiceClient::new(channel);
-    info!("Connected to service discovery");
     // lookup url from env
     let url = env::var("GATEWAY_URL").expect("gateway url must be provided");
     let url: Url = url.parse().expect("failed to parse service url");
@@ -57,6 +58,7 @@ async fn connect_and_register() -> Result<DiscoveryServiceClient<Channel>, Box<d
             port: url.port().expect("gateway url must provide a port") as u32,
         }))
         .await?;
+	info!("Service registered");
     // consume and return client
     Ok(sd_client)
 }
@@ -102,6 +104,7 @@ Authors: {}
     )
     .try_bind_ephemeral(([127, 0, 0, 1], 8080))?;
     // listen
+	info!("Listening on http://127.0.0.1:8080");
     server.await;
     Ok(())
 }
